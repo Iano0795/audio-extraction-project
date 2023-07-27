@@ -12,26 +12,30 @@ app = Tk()
 mp3ext = IntVar()
 #CLICK EVENTS
 def openfile():
+    progress["value"]=0
     global files
     files= filedialog.askopenfilenames(title="Open file", initialdir="/")
     for i in range(len(files)):
         display = os.path.basename(files[i])
         allFiles.insert(i,display)
+# ISSUE WITH PROGRESS BAR
 def update_progress(value):
     progress["value"]=value
     app.update()
+
 def extract():
     
     directory = "extracted songs"
     parent_dir  = os.getcwd()
     path = os.path.join(parent_dir,directory)
-    if os.path.exists(directory):
-        os.chdir(path)
-    else:
-        os.mkdir(directory)
-        os.chdir(path)
+    if not os.path.exists(directory):
+         os.mkdir(directory)
+    os.chdir(directory)
+
+    total_files = len(files)
+    value_factor = 100/total_files
+    progress_value = 0
     for i in range(len(files)):
-        value_factor = int(100/len(files))
         Message.config(text="Extracting....")
         output = os.path.basename(files[i])
         video = edit.VideoFileClip(files[i])
@@ -44,9 +48,10 @@ def extract():
             audio.write_audiofile(output.replace(output[-4:],'.wav'))
         audiofile = output.replace(output[-4:],'.mp3')
         allExtractedfiles.insert(i,audiofile)
-        value_factor+=value_factor
-        update_progress(value_factor)
-    if len(files)==1:
+        progress_value += value_factor
+        update_progress((i + 1) * value_factor)
+        app.update_idletasks()
+    if total_files==1:
             Message.config(text="Your audio is here:👇")
     else:
             Message.config(text="Your audio files are here:👇")
@@ -106,12 +111,21 @@ allExtractedfiles = Listbox(
 )
 allExtractedfiles.config(height=10)
 allExtractedfiles.grid(row=4,column=1)
+openOutputFolder = Button(app,
+                        text="Open Output Folder",
+                        bg="#4284ff",
+                        fg="white",
+                        activebackground="#4284ff",
+                        activeforeground="white",
+                        border=0,
+                        command=lambda:os.startfile(os.getcwd()))
+openOutputFolder.grid(row=5,column=1)
 progress = ttk.Progressbar(
     app,
     length="300",
     mode="determinate"
 )
-progress.grid(row=5,column=1,sticky=W)
+progress.grid(row=6,column=1,sticky=W)
 exts = ("MP3","WAV")
 x=IntVar()
 for i in range(len(exts)):
